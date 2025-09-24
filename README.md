@@ -33,7 +33,9 @@ sistema-presenca/
 │   └── index.html
 ├── server.js
 ├── package.json
-└── .gitignore
+├── .env
+├── .gitignore
+└── README.md
 
 ```
 
@@ -53,11 +55,20 @@ sistema-presenca/
 
 - npm install
 
-3. **Inicie o servidor**:
+3. **Configure as variáveis de ambiente**:
+
+```
+PORT=3000
+DATABASE_PATH=./data/guests.db
+CORS_ORIGIN=*
+NODE_ENV=development
+```
+
+4. **Inicie o servidor**:
 
 - npm start
 
-3. **Acesse a aplicação**:
+5. **Acesse a aplicação**:
 
 - Abra o navegador em http://localhost:3000
 
