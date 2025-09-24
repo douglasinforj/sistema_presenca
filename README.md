@@ -15,6 +15,7 @@ Sistema de Presença é uma aplicação web para gerenciamento de convidados e p
 - **Backend**: Node.js, Express.js, SQLite3
 - **Frontend**: HTML, Tailwind CSS, JavaScript
 - **Dependências**: express, sqlite3, cors, csv-parser
+- **Desenvolvimento**: nodemon
 - **Hospedagem**: Compatível com Render
 
 ## Estrutura do Projeto
