@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const csvParser = require('csv-parser');
+const { error } = require('console');
 
 
 //leitura de variaveis de ambiente
@@ -35,3 +36,16 @@ if(!fs.existsSync(dataDir)){
     }
 }
 
+// Inicializando SQLITE (database)
+const dbPath = process.env.DATABASE_PATH || (fs.existsSync(dataDir)
+    ? path.join(dataDir, 'guests.db')
+    : path.join(__dirname, 'guests.db')
+);
+
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+        console.error('Erro ao conectar ao SQLite database:', err);
+    }else {
+        console.log(`Connectado ao banco de dados SQLite ${dbPath}`);
+    }
+})
