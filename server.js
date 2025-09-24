@@ -49,3 +49,21 @@ const db = new sqlite3.Database(dbPath, (err) => {
         console.log(`Connectado ao banco de dados SQLite ${dbPath}`);
     }
 })
+
+//Criando a tabela guests caso não exista
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS guests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      email TEXT NOT NULL,
+      cpf TEXT,
+      telefone TEXT,
+      empresa TEXT,
+      observacoes TEXT,
+      confirmado BOOLEAN DEFAULT 0,
+      checkin BOOLEAN DEFAULT 0,
+      horarioCheckin TEXT
+    )
+  `);
+});
