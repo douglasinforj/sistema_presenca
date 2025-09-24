@@ -22,5 +22,16 @@ const corsOptions = {
 // configurando middleware
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'public')));
+
+
+//Criando diretorio de dados 'pasta data'
+const dataDir = path.join(__dirname, 'data');
+if(!fs.existsSync(dataDir)){
+    try {
+        fs.mkdirSync(dataDir);
+    } catch (err){
+        console.warn('Diretório não pode ser criado, usar diretório raiz', err);
+    }
+}
 
