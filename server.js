@@ -3,25 +3,43 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
-const csvParser = require('csv-parser');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // Load environment variables
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // CORS configuration
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || '*',
   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type']
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// JWT authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Acesso não autorizado: Token não fornecido' });
+  }
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Acesso não autorizado: Token inválido' });
+    }
+    req.user = user;
+    next();
+  });
+};
 
 // Create data directory if it doesn't exist
 const dataDir = path.join(__dirname, 'data');
@@ -47,13 +65,13 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
-// Create guests table if it doesn't exist
+// Create tables
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS guests (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nome TEXT NOT NULL,
-      email TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
       cpf TEXT,
       telefone TEXT,
       empresa TEXT,
@@ -69,23 +87,72 @@ db.serialize(() => {
       console.log('Guests table ready');
     }
   });
-});
 
-// API Endpoints
-// Get all guests
-app.get('/api/guests', (req, res) => {
-  db.all('SELECT * FROM guests', [], (err, rows) => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL
+    )
+  `, (err) => {
     if (err) {
-      console.error('Error fetching guests:', err);
-      return res.status(500).json({ error: 'Erro ao buscar convidados: ' + err.message });
+      console.error('Error creating users table:', err);
+    } else {
+      console.log('Users table ready');
+      const defaultEmail = 'admin@admin';
+      const defaultPassword = 'admin#123';
+      bcrypt.hash(defaultPassword, 10, (err, hash) => {
+        if (err) {
+          console.error('Error hashing default password:', err);
+          return;
+        }
+        db.run(
+          `INSERT OR IGNORE INTO users (email, password) VALUES (?, ?)`,
+          [defaultEmail, hash],
+          (err) => {
+            if (err) {
+              console.error('Error creating default user:', err);
+            } else {
+              console.log('Default user created:', defaultEmail);
+            }
+          }
+        );
+      });
     }
-    res.json(rows);
   });
 });
 
-// Add a new guest
-app.post('/api/guests', (req, res) => {
+// API Endpoints
+app.post('/api/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+  }
+  db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
+    if (err) {
+      console.error('Error fetching user:', err);
+      return res.status(500).json({ error: 'Erro ao autenticar usuário' });
+    }
+    if (!user) {
+      return res.status(401).json({ error: 'Email ou senha inválidos' });
+    }
+    bcrypt.compare(password, user.password, (err, result) => {
+      if (err) {
+        console.error('Error comparing passwords:', err);
+        return res.status(500).json({ error: 'Erro ao autenticar usuário' });
+      }
+      if (!result) {
+        return res.status(401).json({ error: 'Email ou senha inválidos' });
+      }
+      const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+      res.json({ token });
+    });
+  });
+});
+
+app.post('/api/guests', authenticateToken, (req, res) => {
   const { nome, email, cpf, telefone, empresa, observacoes } = req.body;
+  console.log('Received guest data:'/*, { nome, email, cpf, telefone, empresa, observacoes }*/);
   if (!nome || !email) {
     return res.status(400).json({ error: 'Nome e email são obrigatórios' });
   }
@@ -96,15 +163,28 @@ app.post('/api/guests', (req, res) => {
     function (err) {
       if (err) {
         console.error('Error inserting guest:', err);
+        if (err.message.includes('UNIQUE constraint failed')) {
+          return res.status(409).json({ error: 'Email já cadastrado' });
+        }
         return res.status(500).json({ error: 'Erro ao cadastrar convidado: ' + err.message });
       }
+      console.log('Guest inserted with ID:', this.lastID);
       res.json({ id: this.lastID });
     }
   );
 });
 
-// Update guest confirmation status
-app.patch('/api/guests/:id/confirm', (req, res) => {
+app.get('/api/guests', authenticateToken, (req, res) => {
+  db.all('SELECT * FROM guests', [], (err, rows) => {
+    if (err) {
+      console.error('Error fetching guests:', err);
+      return res.status(500).json({ error: 'Erro ao buscar convidados: ' + err.message });
+    }
+    res.json(rows);
+  });
+});
+
+app.patch('/api/guests/:id/confirm', authenticateToken, (req, res) => {
   const { id } = req.params;
   db.get('SELECT confirmado FROM guests WHERE id = ?', [id], (err, row) => {
     if (err) {
@@ -129,8 +209,7 @@ app.patch('/api/guests/:id/confirm', (req, res) => {
   });
 });
 
-// Perform check-in
-app.patch('/api/guests/:id/checkin', (req, res) => {
+app.patch('/api/guests/:id/checkin', authenticateToken, (req, res) => {
   const { id } = req.params;
   const horarioCheckin = new Date().toLocaleString('pt-BR');
   db.run(
@@ -146,8 +225,7 @@ app.patch('/api/guests/:id/checkin', (req, res) => {
   );
 });
 
-// Delete a guest
-app.delete('/api/guests/:id', (req, res) => {
+app.delete('/api/guests/:id', authenticateToken, (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM guests WHERE id = ?', [id], (err) => {
     if (err) {
@@ -158,8 +236,7 @@ app.delete('/api/guests/:id', (req, res) => {
   });
 });
 
-// Import guests from CSV
-app.post('/api/guests/import', (req, res) => {
+app.post('/api/guests/import', authenticateToken, (req, res) => {
   const guests = req.body;
   if (!Array.isArray(guests)) {
     return res.status(400).json({ error: 'Dados de importação inválidos' });
@@ -197,8 +274,7 @@ app.post('/api/guests/import', (req, res) => {
   });
 });
 
-// Export report as CSV
-app.get('/api/report', (req, res) => {
+app.get('/api/report', authenticateToken, (req, res) => {
   db.all('SELECT * FROM guests', [], (err, rows) => {
     if (err) {
       console.error('Error generating report:', err);
@@ -225,12 +301,10 @@ app.get('/api/report', (req, res) => {
   });
 });
 
-// Serve the frontend
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start server
 app.listen(port, () => {
   console.log(`Server running on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
 });

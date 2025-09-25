@@ -8,253 +8,274 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <!-- Header -->
-    <header class="gradient-bg text-white p-6 shadow-lg">
-        <div class="max-w-7xl mx-auto">
-            <h1 class="text-3xl font-bold">Sistema de Presença</h1>
-            <p class="text-blue-100 mt-2">Gerencie convidados e presenças do seu evento</p>
+    
+    <!-- Login Page -->
+    <div id="login-page" class="flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-xl card-shadow p-8 max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Login</h2>
+            <form id="form-login" class="space-y-6" onsubmit="login(event)">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="login-email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                    <input type="password" id="login-password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <button type="submit" class="w-full gradient-bg text-white py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-all">
+                    Entrar
+                </button>
+            </form>
         </div>
-    </header>
-    <!-- Navigation Tabs -->
-    <nav class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6">
-            <div class="flex space-x-1 overflow-x-auto">
-                <button onclick="showTab('dashboard')" id="tab-dashboard" class="tab-active text-white px-3 sm:px-6 py-3 sm:py-4 font-medium rounded-t-lg transition-all whitespace-nowrap text-sm sm:text-base">
-                    📊 <span class="hidden sm:inline">Dashboard</span>
-                </button>
-                <button onclick="showTab('cadastro')" id="tab-cadastro" class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 sm:px-6 py-3 sm:py-4 font-medium rounded-t-lg transition-all whitespace-nowrap text-sm sm:text-base">
-                    ➕ <span class="hidden sm:inline">Cadastro</span>
-                </button>
-                <button onclick="showTab('importar')" id="tab-importar" class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 sm:px-6 py-3 sm:py-4 font-medium rounded-t-lg transition-all whitespace-nowrap text-sm sm:text-base">
-                    📁 <span class="hidden sm:inline">Importar</span>
-                </button>
-                <button onclick="showTab('checkin')" id="tab-checkin" class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 sm:px-6 py-3 sm:py-4 font-medium rounded-t-lg transition-all whitespace-nowrap text-sm sm:text-base">
-                    ✅ <span class="hidden sm:inline">Check-in</span>
-                </button>
-                <button onclick="showTab('relatorio')" id="tab-relatorio" class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 sm:px-6 py-3 sm:py-4 font-medium rounded-t-lg transition-all whitespace-nowrap text-sm sm:text-base">
-                    📋 <span class="hidden sm:inline">Relatório</span>
-                </button>
-            </div>
-        </div>
-    </nav>
-    <main class="max-w-7xl mx-auto p-3 sm:p-6">
-
-
-        <!-- Dashboard Tab -->
-        <div id="content-dashboard" class="tab-content">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-xl card-shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Total Convidados</p>
-                            <p class="text-2xl font-bold text-gray-800" id="total-convidados">0</p>
-                        </div>
-                        <div class="bg-blue-100 p-3 rounded-full">
-                            <span class="text-2xl">👥</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl card-shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Confirmados</p>
-                            <p class="text-2xl font-bold text-green-600" id="total-confirmados">0</p>
-                        </div>
-                        <div class="bg-green-100 p-3 rounded-full">
-                            <span class="text-2xl">✅</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl card-shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Check-in Feito</p>
-                            <p class="text-2xl font-bold text-purple-600" id="total-checkin">0</p>
-                        </div>
-                        <div class="bg-purple-100 p-3 rounded-full">
-                            <span class="text-2xl">🎯</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl card-shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Taxa Presença</p>
-                            <p class="text-2xl font-bold text-orange-600" id="taxa-presenca">0%</p>
-                        </div>
-                        <div class="bg-orange-100 p-3 rounded-full">
-                            <span class="text-2xl">📈</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white rounded-xl card-shadow p-6">
-                <h3 class="text-xl font-semibold mb-4">Lista de Convidados</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="border-b">
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Nome</th>
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden sm:table-cell">Email</th>
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden md:table-cell">CPF</th>
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Status</th>
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Check-in</th>
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-convidados">
-                            <tr>
-                                <td colspan="5" class="text-center py-8 text-gray-500">
-                                    Nenhum convidado cadastrado ainda
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-
-        
-        <!-- Cadastro Tab -->
-        <div id="content-cadastro" class="tab-content hidden">
-    <div class="bg-white rounded-xl card-shadow p-8 max-w-2xl mx-auto">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800">Cadastrar Novo Convidado</h2>
-        <form id="form-cadastro" class="space-y-6" onsubmit="cadastrarConvidado(event)">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nome Completo *</label>
-                    <input type="text" id="nome" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-                    <input type="email" id="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">CPF</label>
-                    <input type="text" id="cpf" placeholder="000.000.000-00" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
-                    <input type="tel" id="telefone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Empresa</label>
-                <input type="text" id="empresa" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Observações</label>
-                <textarea id="observacoes" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
-            </div>
-            <button type="submit" class="w-full gradient-bg text-white py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-all">
-                Cadastrar Convidado
-            </button>
-        </form>
     </div>
-</div>
-
-
-        <!-- Importar Tab -->
-        <div id="content-importar" class="tab-content hidden">
-            <div class="bg-white rounded-xl card-shadow p-8 max-w-2xl mx-auto">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Importar Lista de Convidados</h2>
-                <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h3 class="font-medium text-blue-800 mb-2">Formato do arquivo:</h3>
-                    <p class="text-sm text-blue-700 mb-2">O arquivo deve conter as colunas: Nome, Email, CPF, Telefone, Empresa</p>
-                    <p class="text-sm text-blue-600">Formatos aceitos: CSV (.csv)</p>
+    <!-- Main Application (hidden by default) -->
+    <div id="app-content" class="hidden">
+        <!-- Header -->
+        <header class="gradient-bg text-white p-6 shadow-lg">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">Sistema de Presença</h1>
+                    <p class="text-blue-100 mt-2">Gerencie convidados e presenças do seu evento</p>
                 </div>
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">
-                    <input type="file" id="arquivo-importacao" accept=".csv" class="hidden">
-                    <div onclick="document.getElementById('arquivo-importacao').click()" class="cursor-pointer">
-                        <div class="text-4xl mb-4">📁</div>
-                        <p class="text-lg font-medium text-gray-700 mb-2">Clique para selecionar arquivo</p>
-                        <p class="text-sm text-gray-500">ou arraste e solte aqui</p>
+                <button onclick="logout()" class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-all">
+                    Sair
+                </button>
+            </div>
+        </header>
+        <!-- Navigation Tabs -->
+        <nav class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6">
+                <div class="flex space-x-1 overflow-x-auto">
+                    <button onclick="showTab('dashboard')" id="tab-dashboard" class="tab-active text-white px-3 sm:px-6 py-3 sm:py-4 font-medium rounded-t-lg transition-all whitespace-nowrap text-sm sm:text-base">
+                        📊 <span class="hidden sm:inline">Dashboard</span>
+                    </button>
+                    <button onclick="showTab('cadastro')" id="tab-cadastro" class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 sm:px-6 py-3 sm:py-4 font-medium rounded-t-lg transition-all whitespace-nowrap text-sm sm:text-base">
+                        ➕ <span class="hidden sm:inline">Cadastro</span>
+                    </button>
+                    <button onclick="showTab('importar')" id="tab-importar" class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 sm:px-6 py-3 sm:py-4 font-medium rounded-t-lg transition-all whitespace-nowrap text-sm sm:text-base">
+                        📁 <span class="hidden sm:inline">Importar</span>
+                    </button>
+                    <button onclick="showTab('checkin')" id="tab-checkin" class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 sm:px-6 py-3 sm:py-4 font-medium rounded-t-lg transition-all whitespace-nowrap text-sm sm:text-base">
+                        ✅ <span class="hidden sm:inline">Check-in</span>
+                    </button>
+                    <button onclick="showTab('relatorio')" id="tab-relatorio" class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 sm:px-6 py-3 sm:py-4 font-medium rounded-t-lg transition-all whitespace-nowrap text-sm sm:text-base">
+                        📋 <span class="hidden sm:inline">Relatório</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <main class="max-w-7xl mx-auto p-3 sm:p-6">
+            <!-- Dashboard Tab -->
+            <div id="content-dashboard" class="tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl card-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Convidados</p>
+                                <p class="text-2xl font-bold text-gray-800" id="total-convidados">0</p>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <span class="text-2xl">👥</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl card-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Confirmados</p>
+                                <p class="text-2xl font-bold text-green-600" id="total-confirmados">0</p>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <span class="text-2xl">✅</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl card-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Check-in Feito</p>
+                                <p class="text-2xl font-bold text-purple-600" id="total-checkin">0</p>
+                            </div>
+                            <div class="bg-purple-100 p-3 rounded-full">
+                                <span class="text-2xl">🎯</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl card-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Taxa Presença</p>
+                                <p class="text-2xl font-bold text-orange-600" id="taxa-presenca">0%</p>
+                            </div>
+                            <div class="bg-orange-100 p-3 rounded-full">
+                                <span class="text-2xl">📈</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div id="preview-importacao" class="hidden mb-6">
-                    <h3 class="font-medium text-gray-800 mb-3">Prévia dos dados:</h3>
-                    <div class="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
-                        <table class="w-full text-sm">
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <h3 class="text-xl font-semibold mb-4">Lista de Convidados</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
                             <thead>
                                 <tr class="border-b">
-                                    <th class="text-left py-2">Nome</th>
-                                    <th class="text-left py-2">Email</th>
-                                    <th class="text-left py-2">CPF</th>
-                                    <th class="text-left py-2 hidden sm:table-cell">Telefone</th>
-                                    <th class="text-left py-2 hidden md:table-cell">Empresa</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Nome</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden sm:table-cell">Email</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden md:table-cell">CPF</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Status</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Check-in</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Ações</th>
                                 </tr>
                             </thead>
-                            <tbody id="preview-dados"></tbody>
+                            <tbody id="lista-convidados">
+                                <tr>
+                                    <td colspan="5" class="text-center py-8 text-gray-500">
+                                        Nenhum convidado cadastrado ainda
+                                    </td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
-                <button id="btn-importar" onclick="importarDados()" class="w-full gradient-bg text-white py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-all disabled:opacity-50" disabled>
-                    Importar Convidados
-                </button>
             </div>
-        </div>
-        <!-- Check-in Tab -->
-        <div id="content-checkin" class="tab-content hidden">
-            <div class="bg-white rounded-xl card-shadow p-8 max-w-2xl mx-auto">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Check-in de Convidados</h2>
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Buscar convidado</label>
-                    <input type="text" id="busca-checkin" placeholder="Digite o nome, CPF, email ou empresa..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div id="resultados-busca" class="space-y-3">
-                    <!-- Resultados da busca aparecerão aqui -->
-                </div>
-                <div id="sem-resultados" class="text-center py-8 text-gray-500 hidden">
-                    Digite o nome ou email para buscar convidados
+            <!-- Cadastro Tab -->
+            <div id="content-cadastro" class="tab-content hidden">
+                <div class="bg-white rounded-xl card-shadow p-8 max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Cadastrar Novo Convidado</h2>
+                    <form id="form-cadastro" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nome Completo *</label>
+                                <input type="text" id="nome" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                                <input type="email" id="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">CPF</label>
+                                <input type="text" id="cpf" placeholder="000.000.000-00" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+                                <input type="tel" id="telefone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Empresa</label>
+                            <input type="text" id="empresa" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Observações</label>
+                            <textarea id="observacoes" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        </div>
+                        <button type="submit" class="w-full gradient-bg text-white py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-all">
+                            Cadastrar Convidado
+                        </button>
+                    </form>
                 </div>
             </div>
-        </div>
-        <!-- Relatório Tab -->
-        <div id="content-relatorio" class="tab-content hidden">
-            <div class="bg-white rounded-xl card-shadow p-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Relatório de Presença</h2>
-                    <button onclick="exportarRelatorio()" class="gradient-bg text-white px-6 py-2 rounded-lg font-medium hover:opacity-90 transition-all">
-                        📊 Exportar CSV
+            <!-- Importar Tab -->
+            <div id="content-importar" class="tab-content hidden">
+                <div class="bg-white rounded-xl card-shadow p-8 max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Importar Lista de Convidados</h2>
+                    <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h3 class="font-medium text-blue-800 mb-2">Formato do arquivo:</h3>
+                        <p class="text-sm text-blue-700 mb-2">O arquivo deve conter as colunas: Nome, Email, CPF, Telefone, Empresa</p>
+                        <p class="text-sm text-blue-600">Formatos aceitos: CSV (.csv)</p>
+                    </div>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">
+                        <input type="file" id="arquivo-importacao" accept=".csv" class="hidden">
+                        <div onclick="document.getElementById('arquivo-importacao').click()" class="cursor-pointer">
+                            <div class="text-4xl mb-4">📁</div>
+                            <p class="text-lg font-medium text-gray-700 mb-2">Clique para selecionar arquivo</p>
+                            <p class="text-sm text-gray-500">ou arraste e solte aqui</p>
+                        </div>
+                    </div>
+                    <div id="preview-importacao" class="hidden mb-6">
+                        <h3 class="font-medium text-gray-800 mb-3">Prévia dos dados:</h3>
+                        <div class="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b">
+                                        <th class="text-left py-2">Nome</th>
+                                        <th class="text-left py-2">Email</th>
+                                        <th class="text-left py-2">CPF</th>
+                                        <th class="text-left py-2 hidden sm:table-cell">Telefone</th>
+                                        <th class="text-left py-2 hidden md:table-cell">Empresa</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="preview-dados"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <button id="btn-importar" onclick="importarDados()" class="w-full gradient-bg text-white py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-all disabled:opacity-50" disabled>
+                        Importar Convidados
                     </button>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl">
-                        <h3 class="text-lg font-medium mb-2">Total de Convidados</h3>
-                        <p class="text-3xl font-bold" id="rel-total">0</p>
+            </div>
+            <!-- Check-in Tab -->
+            <div id="content-checkin" class="tab-content hidden">
+                <div class="bg-white rounded-xl card-shadow p-8 max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Check-in de Convidados</h2>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar convidado</label>
+                        <input type="text" id="busca-checkin" placeholder="Digite o nome, CPF, email ou empresa..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
-                    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl">
-                        <h3 class="text-lg font-medium mb-2">Presentes</h3>
-                        <p class="text-3xl font-bold" id="rel-presentes">0</p>
+                    <div id="resultados-busca" class="space-y-3">
+                        <!-- Resultados da busca aparecerão aqui -->
                     </div>
-                    <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-xl">
-                        <h3 class="text-lg font-medium mb-2">Ausentes</h3>
-                        <p class="text-3xl font-bold" id="rel-ausentes">0</p>
+                    <div id="sem-resultados" class="text-center py-8 text-gray-500 hidden">
+                        Digite o nome ou email para buscar convidados
                     </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="border-b">
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Nome</th>
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden sm:table-cell">Email</th>
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden md:table-cell">CPF</th>
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden lg:table-cell">Empresa</th>
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Status</th>
-                                <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden md:table-cell">Horário Check-in</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-relatorio">
-                            <!-- Dados do relatório aparecerão aqui -->
-                        </tbody>
-                    </table>
                 </div>
             </div>
-        </div>
-    </main>
+            <!-- Relatório Tab -->
+            <div id="content-relatorio" class="tab-content hidden">
+                <div class="bg-white rounded-xl card-shadow p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Relatório de Presença</h2>
+                        <button onclick="exportarRelatorio()" class="gradient-bg text-white px-6 py-2 rounded-lg font-medium hover:opacity-90 transition-all">
+                            📊 Exportar CSV
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl">
+                            <h3 class="text-lg font-medium mb-2">Total de Convidados</h3>
+                            <p class="text-3xl font-bold" id="rel-total">0</p>
+                        </div>
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl">
+                            <h3 class="text-lg font-medium mb-2">Presentes</h3>
+                            <p class="text-3xl font-bold" id="rel-presentes">0</p>
+                        </div>
+                        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-xl">
+                            <h3 class="text-lg font-medium mb-2">Ausentes</h3>
+                            <p class="text-3xl font-bold" id="rel-ausentes">0</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Nome</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden sm:table-cell">Email</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden md:table-cell">CPF</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden lg:table-cell">Empresa</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700">Status</th>
+                                    <th class="text-left py-3 px-2 sm:px-4 font-medium text-gray-700 hidden md:table-cell">Horário Check-in</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-relatorio">
+                                <!-- Dados do relatório aparecerão aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
     <script src="/js/script.js"></script>
 </body>
 </html>

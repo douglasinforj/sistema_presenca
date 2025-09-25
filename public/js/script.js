@@ -1,19 +1,62 @@
 let convidados = [];
 let dadosImportacao = [];
 
-// Inicializar aplicação
 document.addEventListener('DOMContentLoaded', function() {
-    atualizarDashboard();
-    atualizarListaConvidados();
-    atualizarRelatorio();
+    const token = localStorage.getItem('token');
+    if (token) {
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('app-content').classList.remove('hidden');
+        atualizarDashboard();
+        atualizarListaConvidados();
+        atualizarRelatorio();
+    } else {
+        document.getElementById('login-page').classList.remove('hidden');
+        document.getElementById('app-content').classList.add('hidden');
+    }
 
-    // Event listeners
-    document.getElementById('form-cadastro').addEventListener('submit', cadastrarConvidado);
+    const formCadastro = document.getElementById('form-cadastro');
+    formCadastro.removeEventListener('submit', cadastrarConvidado);
+    formCadastro.addEventListener('submit', cadastrarConvidado);
+    document.getElementById('form-login').addEventListener('submit', login);
     document.getElementById('arquivo-importacao').addEventListener('change', processarArquivo);
     document.getElementById('busca-checkin').addEventListener('input', buscarConvidados);
 });
 
-// Navegação entre abas
+async function login(e) {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao fazer login');
+        }
+        const { token } = await response.json();
+        localStorage.setItem('token', token);
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('app-content').classList.remove('hidden');
+        atualizarDashboard();
+        atualizarListaConvidados();
+        atualizarRelatorio();
+    } catch (error) {
+        console.error('Erro ao fazer login:', error);
+        alert('Erro ao fazer login: ' + error.message);
+    }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    document.getElementById('login-page').classList.remove('hidden');
+    document.getElementById('app-content').classList.add('hidden');
+    document.getElementById('form-login').reset();
+}
+
 function showTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.add('hidden');
@@ -35,9 +78,11 @@ function showTab(tabName) {
     }
 }
 
-// Cadastrar convidado
 async function cadastrarConvidado(e) {
     e.preventDefault();
+
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
 
     const novoConvidado = {
         nome: document.getElementById('nome').value,
@@ -48,10 +93,15 @@ async function cadastrarConvidado(e) {
         observacoes: document.getElementById('observacoes').value
     };
 
+    console.log('Sending guest data:', novoConvidado);
+
     try {
         const response = await fetch('/api/guests', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
             body: JSON.stringify(novoConvidado)
         });
         if (!response.ok) {
@@ -65,10 +115,11 @@ async function cadastrarConvidado(e) {
     } catch (error) {
         console.error('Erro ao cadastrar convidado:', error);
         alert('Erro ao cadastrar convidado: ' + error.message);
+    } finally {
+        submitButton.disabled = false;
     }
 }
 
-// Processar arquivo de importação
 function processarArquivo(e) {
     const arquivo = e.target.files[0];
     if (!arquivo) return;
@@ -133,7 +184,10 @@ async function importarDados() {
     try {
         const response = await fetch('/api/guests/import', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
             body: JSON.stringify(dadosImportacao)
         });
         if (!response.ok) {
@@ -154,7 +208,6 @@ async function importarDados() {
     }
 }
 
-// Buscar convidados para check-in
 async function buscarConvidados() {
     const termo = document.getElementById('busca-checkin').value.toLowerCase();
     const resultados = document.getElementById('resultados-busca');
@@ -167,8 +220,15 @@ async function buscarConvidados() {
     }
 
     try {
-        const response = await fetch('/api/guests');
-        if (!response.ok) throw new Error('Erro ao buscar convidados');
+        const response = await fetch('/api/guests', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao buscar convidados');
+        }
         const convidados = await response.json();
         const encontrados = convidados.filter(c =>
             c.nome.toLowerCase().includes(termo) ||
@@ -209,11 +269,13 @@ async function buscarConvidados() {
     }
 }
 
-// Fazer check-in
 async function fazerCheckin(id) {
     try {
         const response = await fetch(`/api/guests/${id}/checkin`, {
-            method: 'PATCH'
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
         });
         if (!response.ok) {
             const errorData = await response.json();
@@ -229,11 +291,13 @@ async function fazerCheckin(id) {
     }
 }
 
-// Confirmar presença
 async function confirmarPresenca(id) {
     try {
         const response = await fetch(`/api/guests/${id}/confirm`, {
-            method: 'PATCH'
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
         });
         if (!response.ok) {
             const errorData = await response.json();
@@ -247,12 +311,14 @@ async function confirmarPresenca(id) {
     }
 }
 
-// Remover convidado
 async function removerConvidado(id) {
     if (confirm('Tem certeza que deseja remover este convidado?')) {
         try {
             const response = await fetch(`/api/guests/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
             });
             if (!response.ok) {
                 const errorData = await response.json();
@@ -267,11 +333,17 @@ async function removerConvidado(id) {
     }
 }
 
-// Atualizar dashboard
 async function atualizarDashboard() {
     try {
-        const response = await fetch('/api/guests');
-        if (!response.ok) throw new Error('Erro ao atualizar dashboard');
+        const response = await fetch('/api/guests', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao atualizar dashboard');
+        }
         convidados = await response.json();
         const total = convidados.length;
         const confirmados = convidados.filter(c => c.confirmado).length;
@@ -288,11 +360,17 @@ async function atualizarDashboard() {
     }
 }
 
-// Atualizar lista de convidados
 async function atualizarListaConvidados() {
     try {
-        const response = await fetch('/api/guests');
-        if (!response.ok) throw new Error('Erro ao atualizar lista de convidados');
+        const response = await fetch('/api/guests', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao atualizar lista de convidados');
+        }
         convidados = await response.json();
         const tbody = document.getElementById('lista-convidados');
 
@@ -348,11 +426,17 @@ async function atualizarListaConvidados() {
     }
 }
 
-// Atualizar relatório
 async function atualizarRelatorio() {
     try {
-        const response = await fetch('/api/guests');
-        if (!response.ok) throw new Error('Erro ao atualizar relatório');
+        const response = await fetch('/api/guests', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao atualizar relatório');
+        }
         convidados = await response.json();
         const total = convidados.length;
         const presentes = convidados.filter(c => c.checkin).length;
@@ -390,7 +474,28 @@ async function atualizarRelatorio() {
     }
 }
 
-// Exportar relatório
-function exportarRelatorio() {
-    window.location.href = '/api/report';
+async function exportarRelatorio() {
+    try {
+        const response = await fetch('/api/report', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao exportar relatório');
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `relatorio-presenca-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Erro ao exportar relatório:', error);
+        alert('Erro ao exportar relatório: ' + error.message);
+    }
 }
