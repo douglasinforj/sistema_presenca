@@ -27,7 +27,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
   try {
-    fs.mkdirSync(dataDir);
+    fs.mkdirSync(dataDir, { recursive: true });
+    console.log('Data directory created:', dataDir);
   } catch (err) {
     console.warn('Could not create data directory, using root directory:', err);
   }
@@ -61,7 +62,13 @@ db.serialize(() => {
       checkin BOOLEAN DEFAULT 0,
       horarioCheckin TEXT
     )
-  `);
+  `, (err) => {
+    if (err) {
+      console.error('Error creating guests table:', err);
+    } else {
+      console.log('Guests table ready');
+    }
+  });
 });
 
 // API Endpoints
@@ -69,7 +76,8 @@ db.serialize(() => {
 app.get('/api/guests', (req, res) => {
   db.all('SELECT * FROM guests', [], (err, rows) => {
     if (err) {
-      return res.status(500).json({ error: err.message });
+      console.error('Error fetching guests:', err);
+      return res.status(500).json({ error: 'Erro ao buscar convidados: ' + err.message });
     }
     res.json(rows);
   });
@@ -84,10 +92,11 @@ app.post('/api/guests', (req, res) => {
   db.run(
     `INSERT INTO guests (nome, email, cpf, telefone, empresa, observacoes, confirmado, checkin, horarioCheckin)
      VALUES (?, ?, ?, ?, ?, ?, 0, 0, NULL)`,
-    [nome, email, cpf, telefone, empresa, observacoes],
+    [nome, email, cpf || '', telefone || '', empresa || '', observacoes || ''],
     function (err) {
       if (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('Error inserting guest:', err);
+        return res.status(500).json({ error: 'Erro ao cadastrar convidado: ' + err.message });
       }
       res.json({ id: this.lastID });
     }
@@ -99,7 +108,8 @@ app.patch('/api/guests/:id/confirm', (req, res) => {
   const { id } = req.params;
   db.get('SELECT confirmado FROM guests WHERE id = ?', [id], (err, row) => {
     if (err) {
-      return res.status(500).json({ error: err.message });
+      console.error('Error fetching guest for confirmation:', err);
+      return res.status(500).json({ error: 'Erro ao confirmar presença: ' + err.message });
     }
     if (!row) {
       return res.status(404).json({ error: 'Convidado não encontrado' });
@@ -110,7 +120,8 @@ app.patch('/api/guests/:id/confirm', (req, res) => {
       [newStatus, id],
       (err) => {
         if (err) {
-          return res.status(500).json({ error: err.message });
+          console.error('Error updating confirmation:', err);
+          return res.status(500).json({ error: 'Erro ao confirmar presença: ' + err.message });
         }
         res.json({ success: true });
       }
@@ -127,7 +138,8 @@ app.patch('/api/guests/:id/checkin', (req, res) => {
     [horarioCheckin, id],
     (err) => {
       if (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('Error performing check-in:', err);
+        return res.status(500).json({ error: 'Erro ao realizar check-in: ' + err.message });
       }
       res.json({ success: true, horarioCheckin });
     }
@@ -139,7 +151,8 @@ app.delete('/api/guests/:id', (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM guests WHERE id = ?', [id], (err) => {
     if (err) {
-      return res.status(500).json({ error: err.message });
+      console.error('Error deleting guest:', err);
+      return res.status(500).json({ error: 'Erro ao remover convidado: ' + err.message });
     }
     res.json({ success: true });
   });
@@ -167,12 +180,17 @@ app.post('/api/guests/import', (req, res) => {
           guest.telefone || '',
           guest.empresa || '',
           '',
-        ]);
+        ], (err) => {
+          if (err) {
+            console.error('Error inserting guest during import:', err);
+          }
+        });
       }
     });
     stmt.finalize((err) => {
       if (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('Error finalizing import:', err);
+        return res.status(500).json({ error: 'Erro ao importar convidados: ' + err.message });
       }
       res.json({ success: true, count: guests.length });
     });
@@ -183,7 +201,8 @@ app.post('/api/guests/import', (req, res) => {
 app.get('/api/report', (req, res) => {
   db.all('SELECT * FROM guests', [], (err, rows) => {
     if (err) {
-      return res.status(500).json({ error: err.message });
+      console.error('Error generating report:', err);
+      return res.status(500).json({ error: 'Erro ao gerar relatório: ' + err.message });
     }
     const csv = [
       ['Nome', 'Email', 'Telefone', 'Empresa', 'Status', 'Check-in', 'Horário Check-in'],

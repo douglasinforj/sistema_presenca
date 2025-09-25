@@ -1,0 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+body { font-family: 'Inter', sans-serif; }
+.tab-active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
