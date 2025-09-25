@@ -238,9 +238,13 @@ app.delete('/api/guests/:id', authenticateToken, (req, res) => {
 
 app.post('/api/guests/import', authenticateToken, (req, res) => {
   const guests = req.body;
+  console.log('Importing guests:', guests.length); // Debug log
   if (!Array.isArray(guests)) {
     return res.status(400).json({ error: 'Dados de importação inválidos' });
   }
+
+  let countInserted = 0;
+  let countSkipped = 0;
 
   const stmt = db.prepare(
     `INSERT INTO guests (nome, email, cpf, telefone, empresa, observacoes, confirmado, checkin, horarioCheckin)
@@ -259,17 +263,27 @@ app.post('/api/guests/import', authenticateToken, (req, res) => {
           '',
         ], (err) => {
           if (err) {
-            console.error('Error inserting guest during import:', err);
+            console.error('Error inserting guest during import:', err, 'Guest:', guest.email);
+            if (err.message.includes('UNIQUE constraint failed')) {
+              countSkipped++; // Duplicate email, skip
+            } else {
+              // Other errors: could stop or continue; here we continue
+            }
+          } else {
+            countInserted++;
           }
         });
+      } else {
+        countSkipped++; // Invalid guest
       }
     });
     stmt.finalize((err) => {
       if (err) {
         console.error('Error finalizing import:', err);
-        return res.status(500).json({ error: 'Erro ao importar convidados: ' + err.message });
+        return res.status(500).json({ error: 'Erro ao finalizar importação: ' + err.message });
       }
-      res.json({ success: true, count: guests.length });
+      console.log(`Import completed: ${countInserted} inserted, ${countSkipped} skipped`);
+      res.json({ success: true, count: countInserted, skipped: countSkipped });
     });
   });
 });

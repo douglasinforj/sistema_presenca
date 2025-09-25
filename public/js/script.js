@@ -181,6 +181,7 @@ function mostrarPreview() {
 }
 
 async function importarDados() {
+    console.log('Import data:', dadosImportacao); // Debug log
     try {
         const response = await fetch('/api/guests/import', {
             method: 'POST',
@@ -195,7 +196,11 @@ async function importarDados() {
             throw new Error(errorData.error || 'Erro ao importar convidados');
         }
         const result = await response.json();
-        alert(`${result.count} convidados importados com sucesso!`);
+        let message = `${result.count} convidados importados com sucesso!`;
+        if (result.skipped > 0) {
+            message += ` (${result.skipped} pulados por duplicata ou inválidos)`;
+        }
+        alert(message);
         document.getElementById('arquivo-importacao').value = '';
         document.getElementById('preview-importacao').classList.add('hidden');
         document.getElementById('btn-importar').disabled = true;
